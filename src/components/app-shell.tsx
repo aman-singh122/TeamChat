@@ -15,7 +15,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       <UserSync />
       <CallManager />
       <Sidebar />
-      <div className="flex flex-1 flex-col">
+      <div className="flex min-h-0 flex-1 flex-col">
         <div className="flex h-16 items-center justify-between border-b border-border/60 px-4 md:hidden">
           <div className="text-sm font-semibold">TimeCommunication</div>
           <div className="flex items-center gap-2">
@@ -25,7 +25,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             </Button>
           </div>
         </div>
-        <main className="flex-1 bg-background">{children}</main>
+        <main className="flex min-h-0 flex-1 bg-background">{children}</main>
       </div>
     </div>
   );

@@ -11,7 +11,7 @@ export default async function ConversationPage({
   const { conversationId } = await params;
 
   return (
-    <div className="flex h-full flex-col">
+    <div className="flex h-full min-h-0 w-full flex-col">
       <ConversationView
         conversationId={conversationId as Id<"conversations">}
       />

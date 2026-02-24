@@ -1,9 +1,11 @@
 import { useMemo } from "react";
+import { ArrowDown } from "lucide-react";
+
 import type { Doc } from "@/convex/api";
 import { useAutoScroll } from "@/hooks/use-auto-scroll";
 import { MessageItem } from "@/components/chat/message-item";
 import { MessagesPlaceholder } from "@/components/chat/messages-placeholder";
-import { ArrowDown } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 type MessageListProps = {
   messages: Doc<"messages">[];
@@ -11,91 +13,70 @@ type MessageListProps = {
   currentUserId?: string;
 };
 
-export function MessageList({ messages, members, currentUserId }: MessageListProps) {
+export function MessageList({
+  messages,
+  members,
+  currentUserId,
+}: MessageListProps) {
   const sorted = useMemo(
     () =>
       [...messages]
-        .filter((m) => !m.deleted)
+        .filter((message) => !message.deleted)
         .sort((a, b) => a.createdAt - b.createdAt),
     [messages]
   );
 
-  const { containerRef, isAtBottom, scrollToBottom } = useAutoScroll([messages.length]);
-
   const memberMap = useMemo(
-    () => new Map(members.map((m) => [m._id, m.name])),
+    () => new Map(members.map((member) => [member._id, member.name])),
     [members]
   );
 
-  if (sorted.length === 0) return <MessagesPlaceholder />;
+  const { containerRef, isAtBottom, scrollToBottom } = useAutoScroll([
+    sorted.length,
+  ]);
+
+  if (sorted.length === 0) {
+    return (
+      <div className="flex min-h-0 flex-1">
+        <MessagesPlaceholder />
+      </div>
+    );
+  }
 
   return (
-    <>
-      <style>{`
-        .ml-wrap {
-          position: relative; flex: 1; overflow: hidden;
-          font-family: 'Geist', -apple-system, sans-serif;
-        }
-        .ml-scroll {
-          height: 100%; overflow-y: auto;
-          padding: 20px 24px 12px;
-          display: flex; flex-direction: column; gap: 16px;
-          scrollbar-width: thin;
-          scrollbar-color: rgba(255,255,255,0.06) transparent;
-        }
-        .ml-scroll::-webkit-scrollbar { width: 3px; }
-        .ml-scroll::-webkit-scrollbar-track { background: transparent; }
-        .ml-scroll::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.06); border-radius: 2px; }
-
-        .ml-scroll-btn {
-          position: absolute; bottom: 16px; right: 20px;
-          display: flex; align-items: center; gap: 6px;
-          padding: 7px 14px 7px 10px;
-          background: #1a1a1a;
-          border: 1px solid rgba(255,255,255,0.1);
-          border-radius: 100px;
-          font-size: 12px; font-weight: 500;
-          color: rgba(255,255,255,0.65);
-          cursor: pointer; transition: all 0.15s;
-          font-family: inherit; letter-spacing: -0.01em;
-          box-shadow: 0 4px 16px rgba(0,0,0,0.4);
-          animation: ml-up 0.2s ease; outline: none;
-        }
-        .ml-scroll-btn:hover {
-          background: #222;
-          border-color: rgba(255,255,255,0.16);
-          color: rgba(255,255,255,0.85);
-        }
-        @keyframes ml-up {
-          from { opacity:0; transform:translateY(6px); }
-          to   { opacity:1; transform:translateY(0); }
-        }
-      `}</style>
-
-      <div className="ml-wrap">
-        <div ref={containerRef} className="ml-scroll">
-          {sorted.map((message) => (
-            <MessageItem
-              key={message._id}
-              text={message.text}
-              createdAt={message.createdAt}
-              senderName={
-                message.senderId === currentUserId
-                  ? "You"
-                  : memberMap.get(message.senderId) ?? "Unknown"
-              }
-              isOwn={message.senderId === currentUserId}
-            />
-          ))}
-        </div>
-
-        {!isAtBottom && (
-          <button className="ml-scroll-btn" onClick={scrollToBottom}>
-            <ArrowDown size={13} strokeWidth={2.5} />
-            New messages
-          </button>
-        )}
+    <div className="relative flex min-h-0 flex-1 overflow-hidden bg-background">
+      <div
+        ref={containerRef}
+        className="flex h-full w-full min-h-0 flex-col gap-4 overflow-y-auto px-5 py-5 md:px-8"
+      >
+        {sorted.map((message) => (
+          <MessageItem
+            key={message._id}
+            text={message.text}
+            createdAt={message.createdAt}
+            senderName={
+              message.senderId === currentUserId
+                ? "You"
+                : memberMap.get(message.senderId) ?? "Unknown"
+            }
+            isOwn={message.senderId === currentUserId}
+          />
+        ))}
       </div>
-    </>
+
+      {!isAtBottom ? (
+        <div className="absolute bottom-4 right-5 md:right-8">
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={scrollToBottom}
+            className="rounded-full border border-border/80 bg-card shadow-soft"
+          >
+            <ArrowDown className="mr-1 h-3.5 w-3.5" />
+            New messages
+          </Button>
+        </div>
+      ) : null}
+    </div>
   );
 }

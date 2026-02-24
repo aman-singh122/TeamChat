@@ -1,11 +1,12 @@
 "use client";
 
 import * as React from "react";
+import { MessageSquareDashed } from "lucide-react";
 import { useMutation, useQuery } from "convex/react";
 import { useAuth } from "@clerk/nextjs";
+
 import type { Id } from "@/convex/api";
 import { api } from "@/convex/api";
-
 import { ChatHeader } from "@/components/chat/chat-header";
 import { MessageList } from "@/components/chat/message-list";
 import { MessageComposer } from "@/components/chat/message-composer";
@@ -40,7 +41,6 @@ export function ConversationView({
       api.messages.unreadMessages,
       conversationId && shouldRun ? { conversationId, limit: 200 } : "skip"
     ) ?? [];
-
   const markRead = useMutation(api.messages.markConversationRead);
 
   React.useEffect(() => {
@@ -48,87 +48,66 @@ export function ConversationView({
     void markRead({ conversationId });
   }, [conversationId, data?.conversation, messages.length, markRead]);
 
-  /* ── Empty state ── */
   if (!conversationId) {
     return (
-      <>
-        <style>{`
-          .cv-empty {
-            flex: 1; display: flex; flex-direction: column;
-            align-items: center; justify-content: center;
-            gap: 12px; padding: 40px;
-            background: #0a0a0a;
-            font-family: 'Geist', -apple-system, sans-serif;
-          }
-          .cv-empty-icon {
-            width: 44px; height: 44px; border-radius: 12px;
-            background: rgba(255,255,255,0.05);
-            border: 1px solid rgba(255,255,255,0.07);
-            display: flex; align-items: center; justify-content: center;
-          }
-          .cv-empty h3 {
-            font-size: 15px; font-weight: 500;
-            color: rgba(255,255,255,0.6); letter-spacing: -0.02em;
-            margin: 0;
-          }
-          .cv-empty p {
-            font-size: 13px; color: rgba(255,255,255,0.25);
-            margin: 0; font-weight: 300;
-          }
-        `}</style>
-        <div className="cv-empty">
-          <div className="cv-empty-icon">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.3)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-            </svg>
+      <div className="flex h-full min-h-0 flex-1 items-center justify-center bg-background px-6">
+        <div className="max-w-sm space-y-3 text-center">
+          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-muted text-muted-foreground">
+            <MessageSquareDashed className="h-5 w-5" />
           </div>
-          <h3>No conversation selected</h3>
-          <p>Pick one from the sidebar or start a new one.</p>
+          <h3 className="text-base font-semibold text-foreground">
+            No conversation selected
+          </h3>
+          <p className="text-sm text-muted-foreground">
+            Pick one from the sidebar or start a new conversation.
+          </p>
         </div>
-      </>
+      </div>
     );
   }
 
-  /* ── Loading ── */
   if (!shouldRun || data === undefined) {
     return (
-      <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", background: "#0a0a0a" }}>
-        <div style={{ display: "flex", gap: 5 }}>
-          {[0,1,2].map(i => (
-            <div key={i} style={{
-              width: 6, height: 6, borderRadius: "50%",
-              background: "rgba(255,255,255,0.2)",
-              animation: "ldot 1.2s ease-in-out infinite",
-              animationDelay: `${i * 0.18}s`,
-            }} />
-          ))}
+      <div className="flex h-full min-h-0 flex-1 items-center justify-center bg-background">
+        <div className="flex items-center gap-1.5">
+          <span className="h-2 w-2 animate-pulse rounded-full bg-muted-foreground/70" />
+          <span className="h-2 w-2 animate-pulse rounded-full bg-muted-foreground/50 [animation-delay:120ms]" />
+          <span className="h-2 w-2 animate-pulse rounded-full bg-muted-foreground/30 [animation-delay:240ms]" />
         </div>
-        <style>{`
-          @keyframes ldot {
-            0%,80%,100% { transform: scale(0.6); opacity:0.3; }
-            40% { transform: scale(1); opacity:0.8; }
-          }
-        `}</style>
       </div>
     );
   }
 
-  /* ── Not found ── */
   if (!data?.conversation) {
     return (
-      <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", background: "#0a0a0a", fontSize: 13, color: "rgba(255,255,255,0.28)", fontFamily: "'Geist', sans-serif" }}>
-        Conversation not found.
+      <div className="flex h-full min-h-0 flex-1 items-center justify-center bg-background px-6">
+        <p className="text-sm text-muted-foreground">Conversation not found.</p>
       </div>
     );
   }
 
-  const { conversation, members } = data;
+  const { conversation } = data;
+  const members = data.members.filter(
+    (member): member is NonNullable<(typeof data.members)[number]> => member !== null
+  );
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", height: "100%", background: "#0a0a0a" }}>
-      <ChatHeader conversation={conversation} members={members} currentUser={currentUser} />
-      <SummaryCard unreadCount={unreadCount} unreadMessages={unreadMessages} members={members} />
-      <MessageList messages={messages} members={members} currentUserId={currentUser?._id} />
+    <div className="flex h-full min-h-0 w-full flex-1 flex-col bg-background">
+      <ChatHeader
+        conversation={conversation}
+        members={members}
+        currentUser={currentUser}
+      />
+      <SummaryCard
+        unreadCount={unreadCount}
+        unreadMessages={unreadMessages}
+        members={members}
+      />
+      <MessageList
+        messages={messages}
+        members={members}
+        currentUserId={currentUser?._id}
+      />
       <TypingIndicator conversationId={conversationId} members={members} />
       <MessageComposer conversationId={conversationId} />
     </div>

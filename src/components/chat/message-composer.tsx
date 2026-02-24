@@ -51,17 +51,24 @@ export function MessageComposer({ conversationId }: MessageComposerProps) {
   };
 
   return (
-    <div className="flex items-center gap-3 border-t border-border/60 bg-background p-4">
+    <div className="sticky bottom-0 z-10 border-t border-border/70 bg-card/80 px-4 py-3 backdrop-blur md:px-6">
+      <div className="flex w-full items-center gap-3">
       <Input
         value={value}
         onChange={handleChange}
         onKeyDown={handleKeyDown}
         placeholder="Type your message..."
+        className="h-12 rounded-2xl border-border bg-background text-[15px]"
       />
-      <Button onClick={handleSend} disabled={!value.trim()}>
+      <Button
+        onClick={handleSend}
+        disabled={!value.trim()}
+        className="h-12 rounded-2xl px-6"
+      >
         <Send className="h-4 w-4" />
         Send
       </Button>
+      </div>
     </div>
   );
 }
