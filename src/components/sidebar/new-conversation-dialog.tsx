@@ -128,9 +128,6 @@ export function NewConversationDialog() {
                       </Avatar>
                       <div className="min-w-0">
                         <p className="truncate text-sm font-semibold">{user.name}</p>
-                        <p className="truncate text-xs text-muted-foreground">
-                          {user.email}
-                        </p>
                       </div>
                     </button>
                   ))
