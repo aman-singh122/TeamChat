@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import * as React from "react";
 import { Send, Smile } from "lucide-react";
@@ -241,3 +241,4 @@ export function MessageComposer({ onSend, onTyping }: MessageComposerProps) {
     </div>
   );
 }
+

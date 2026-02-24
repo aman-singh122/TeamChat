@@ -1,13 +1,16 @@
+// Message queries and mutations.
+// Chat read/write business logic.
+
 import { mutation, query, type MutationCtx, type QueryCtx } from "./_generated/server";
 import { v } from "convex/values";
 
 type ConvexCtx = MutationCtx | QueryCtx;
 const reactionValidator = v.union(
-  v.literal("👍"),
-  v.literal("❤️"),
-  v.literal("😂"),
-  v.literal("😮"),
-  v.literal("😢")
+  v.literal("\u{1F44D}"),
+  v.literal("\u{2764}\u{FE0F}"),
+  v.literal("\u{1F602}"),
+  v.literal("\u{1F62E}"),
+  v.literal("\u{1F622}")
 );
 
 async function requireCurrentUser(ctx: ConvexCtx) {
@@ -37,14 +40,18 @@ export const listByConversation = query({
       return [];
     }
 
-    const limit = Math.min(Math.max(args.limit ?? 2000, 50), 5000);
-    return ctx.db
+    const baseQuery = ctx.db
       .query("messages")
       .withIndex("by_conversation", (q) =>
         q.eq("conversationId", args.conversationId)
-      )
-      .order("desc")
-      .take(limit);
+      );
+
+    if (args.limit === undefined) {
+      return baseQuery.order("asc").collect();
+    }
+
+    const limit = Math.min(Math.max(args.limit, 50), 5000);
+    return baseQuery.order("desc").take(limit);
   },
 });
 
@@ -365,3 +372,5 @@ export const reactionsByMessage = query({
     };
   },
 });
+
+

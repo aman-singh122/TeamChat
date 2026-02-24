@@ -1,3 +1,5 @@
+// Summary prompt builder.
+// Forces concise bullet output.
 export function buildSummaryPrompt(formattedMessages: string) {
   return [
     "You summarize chat messages into concise, concrete bullet points.",

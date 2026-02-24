@@ -20,7 +20,6 @@ export function ConversationView({
 }: {
   conversationId?: Id<"conversations">;
 }) {
-  const messageFetchLimit = 2000;
   const { isLoaded, isSignedIn } = useAuth();
   const shouldRun = isLoaded && isSignedIn;
 
@@ -31,7 +30,7 @@ export function ConversationView({
   const currentUser = useQuery(api.users.getCurrent, shouldRun ? {} : "skip");
   const messages = useQuery(
     api.messages.listByConversation,
-    conversationId && shouldRun ? { conversationId, limit: messageFetchLimit } : "skip"
+    conversationId && shouldRun ? { conversationId } : "skip"
   );
   const unreadCount =
     useQuery(

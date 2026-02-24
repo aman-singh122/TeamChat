@@ -1,4 +1,4 @@
-import { ArrowRight, MessageSquare, Sparkles, Users, Video } from "lucide-react";
+﻿import { ArrowRight, MessageSquare, Sparkles, Users, Video } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 
@@ -73,3 +73,4 @@ export default function ChatLandingPage() {
     </div>
   );
 }
+

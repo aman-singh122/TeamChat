@@ -1,3 +1,5 @@
+// App env values helper.
+// Used by server and client.
 export function getPublicEnv() {
   const convexUrl = process.env.NEXT_PUBLIC_CONVEX_URL;
 
@@ -14,14 +16,6 @@ export function getLiveKitPublicEnv() {
     throw new Error("Missing NEXT_PUBLIC_LIVEKIT_URL");
   }
   return { livekitUrl };
-}
-
-export function getOpenAIEnv() {
-  const openaiApiKey = process.env.OPENAI_API_KEY;
-  if (!openaiApiKey) {
-    throw new Error("Missing OPENAI_API_KEY");
-  }
-  return { openaiApiKey };
 }
 
 export function getGeminiEnv() {

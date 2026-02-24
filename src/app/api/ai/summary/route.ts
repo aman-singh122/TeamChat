@@ -4,6 +4,8 @@ import { getGeminiEnv } from "@/lib/env";
 import { buildSummaryPrompt } from "@/lib/ai/summary";
 
 export const runtime = "nodejs";
+// Chat summary API route.
+// Calls Gemini and formats output.
 
 type SummaryRequest = {
   messages: Array<{
@@ -26,9 +28,11 @@ function sanitizeSummary(raw: string) {
     .split("\n")
     .map((line) => line.trim())
     .filter(Boolean)
-    .filter((line) => !/^here'?s\s+a\s+summary/i.test(line))
+    .map((line) => line.replace(/^(?:\u2022|[*-])\s*/, ""))
+    .filter((line) => !/^here'?s\s+(a\s+)?summary/i.test(line))
     .filter((line) => !/^summary\s*:/i.test(line))
-    .map((line) => (line.startsWith("- ") ? line : `- ${line.replace(/^[•*-]\s*/, "")}`));
+    .filter((line) => !/^here'?s\s+(a\s+)?concise\s+summary/i.test(line))
+    .map((line) => `- ${line}`);
 
   return cleaned.join("\n");
 }
@@ -37,10 +41,7 @@ export async function POST(request: Request) {
   try {
     const body = (await request.json()) as SummaryRequest;
     if (!body.messages || body.messages.length === 0) {
-      return NextResponse.json(
-        { error: "No messages provided." },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "No messages provided." }, { status: 400 });
     }
 
     const { geminiApiKey, geminiModel } = getGeminiEnv();
@@ -59,6 +60,7 @@ export async function POST(request: Request) {
 
     let summary = "";
     let lastError = "Gemini request failed";
+
     for (const model of candidateModels) {
       const response = await fetch(
         `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${geminiApiKey}`,
@@ -103,6 +105,7 @@ export async function POST(request: Request) {
       if (summary) {
         break;
       }
+
       lastError = "Gemini returned an empty summary";
     }
 
@@ -118,14 +121,8 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ summary: finalSummary });
   } catch (error) {
-    const message =
-      error instanceof Error
-        ? error.message
-        : "Failed to generate summary.";
+    const message = error instanceof Error ? error.message : "Failed to generate summary.";
 
-    return NextResponse.json(
-      { error: message },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }
