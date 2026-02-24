@@ -28,6 +28,19 @@ export default defineSchema({
     createdAt: v.number(),
     deleted: v.boolean(),
   }).index("by_conversation", ["conversationId", "createdAt"]),
+  messageReactions: defineTable({
+    messageId: v.id("messages"),
+    userId: v.id("users"),
+    reaction: v.union(
+      v.literal("👍"),
+      v.literal("❤️"),
+      v.literal("😂"),
+      v.literal("😮"),
+      v.literal("😢")
+    ),
+  })
+    .index("by_message", ["messageId"])
+    .index("by_message_user_reaction", ["messageId", "userId", "reaction"]),
   messageReads: defineTable({
     messageId: v.id("messages"),
     userId: v.id("users"),
@@ -63,13 +76,3 @@ export default defineSchema({
     .index("by_status", ["status"])
     .index("by_caller", ["callerId"]),
 });
-
-calls: defineTable({
-  conversationId: v.id("conversations"),
-  roomName: v.string(),
-  callerId: v.id("users"),
-  status: v.string(), // "ringing" | "accepted" | "ended"
-  createdAt: v.number(),
-})
-  .index("by_conversation", ["conversationId"])
-  .index("by_status", ["status"])

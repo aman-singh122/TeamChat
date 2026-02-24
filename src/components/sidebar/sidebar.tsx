@@ -44,7 +44,7 @@ export function Sidebar() {
   });
 
   return (
-    <aside className="hidden h-screen w-80 shrink-0 flex-col border-r border-border/70 bg-card/50 backdrop-blur md:flex">
+    <aside className="hidden h-screen w-80 shrink-0 flex-col overflow-hidden border-r border-border/70 bg-card/60 backdrop-blur md:flex">
       <div className="flex items-center justify-between border-b border-border/70 px-4 py-4">
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
@@ -98,7 +98,7 @@ export function Sidebar() {
         )}
       </div>
 
-      <div className="flex items-center gap-3 border-t border-border/70 px-4 py-3">
+      <div className="mt-auto flex items-center gap-3 border-t border-border/70 bg-card/80 px-4 py-3 backdrop-blur">
         <UserButton />
         <div className="min-w-0 flex-1">
           <p className="truncate text-sm font-semibold text-foreground">

@@ -99,6 +99,9 @@ export const listSidebar = query(async (ctx) => {
 
     let unread = 0;
     for (const message of messages) {
+      if (message.deleted) {
+        continue;
+      }
       if (message.senderId === user._id) {
         continue;
       }

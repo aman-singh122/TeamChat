@@ -9,12 +9,14 @@ import { Card } from "@/components/ui/card";
 type SummaryCardProps = {
   unreadCount: number;
   unreadMessages: Doc<"messages">[];
+  recentMessages: Doc<"messages">[];
   members: Doc<"users">[];
 };
 
 export function SummaryCard({
   unreadCount,
   unreadMessages,
+  recentMessages,
   members,
 }: SummaryCardProps) {
   const [summary, setSummary] = React.useState<string | null>(null);
@@ -25,23 +27,26 @@ export function SummaryCard({
     if (summary) {
       return;
     }
+
     setLoading(true);
     setError(null);
+
     try {
-      const senderLookup = new Map(
-        members.map((member) => [member._id, member.name])
-      );
-      const payload = [...unreadMessages]
-        .filter((message) => !message.deleted)
+      const senderLookup = new Map(members.map((member) => [member._id, member.name]));
+      const sourceMessages =
+        unreadMessages.length > 0 ? unreadMessages : recentMessages.slice(-30);
+
+      const payload = [...sourceMessages]
+        .filter((message) => !message.deleted && message.text.trim().length > 0)
         .sort((a, b) => a.createdAt - b.createdAt)
         .map((message) => ({
           text: message.text,
           sender: senderLookup.get(message.senderId) ?? "Unknown",
           createdAt: message.createdAt,
         }));
+
       if (payload.length === 0) {
         setError("No unread messages to summarize.");
-        setLoading(false);
         return;
       }
 
@@ -50,19 +55,21 @@ export function SummaryCard({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ messages: payload }),
       });
+
       if (!response.ok) {
         throw new Error("Request failed");
       }
+
       const data = (await response.json()) as { summary: string };
       setSummary(data.summary);
-    } catch (err) {
+    } catch {
       setError("We couldn't summarize this conversation right now.");
     } finally {
       setLoading(false);
     }
   };
 
-  if (unreadCount < 20) {
+  if (recentMessages.length < 1) {
     return null;
   }
 
@@ -70,9 +77,11 @@ export function SummaryCard({
     <Card className="mx-6 my-4 p-4">
       <div className="flex flex-col gap-3">
         <div>
-          <p className="text-sm font-semibold">Missed messages summary</p>
+          <p className="text-sm font-semibold">AI chat summary</p>
           <p className="text-xs text-muted-foreground">
-            {unreadCount} unread messages
+            {unreadCount > 0
+              ? `${unreadCount} unread messages`
+              : "Summarize the latest messages"}
           </p>
         </div>
         {summary ? (
@@ -82,13 +91,17 @@ export function SummaryCard({
               .filter(Boolean)
               .map((line) => (
                 <li key={line} className="list-disc">
-                  {line.replace(/^[-•]\s*/, "")}
+                  {line.replace(/^(?:[-*])\s*/, "")}
                 </li>
               ))}
           </ul>
         ) : (
           <Button onClick={handleSummarize} disabled={loading}>
-            {loading ? "Summarizing..." : "Summarize missed messages"}
+            {loading
+              ? "Summarizing..."
+              : unreadCount > 0
+                ? "Summarize missed messages"
+                : "Summarize recent chat"}
           </Button>
         )}
         {error ? <p className="text-xs text-destructive">{error}</p> : null}

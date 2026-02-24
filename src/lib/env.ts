@@ -24,6 +24,15 @@ export function getOpenAIEnv() {
   return { openaiApiKey };
 }
 
+export function getGeminiEnv() {
+  const geminiApiKey = process.env.GEMINI_API_KEY;
+  const geminiModel = process.env.GEMINI_MODEL ?? "gemini-2.5-flash";
+  if (!geminiApiKey) {
+    throw new Error("Missing GEMINI_API_KEY");
+  }
+  return { geminiApiKey, geminiModel };
+}
+
 export function getLiveKitServerEnv() {
   const livekitApiKey = process.env.LIVEKIT_API_KEY;
   const livekitApiSecret = process.env.LIVEKIT_API_SECRET;

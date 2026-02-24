@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-import type { Doc } from "@/convex/api";
 import type { SidebarConversation } from "@/types/chat";
 import { cn } from "@/lib/utils";
 import { formatMessageTimestamp } from "@/lib/time";
@@ -24,6 +23,9 @@ export function ConversationItem({
     data.members,
     currentUserId
   );
+  const displayTitle = data.conversation.isGroup
+    ? `${title} (${data.members.length})`
+    : title;
   const image = getConversationImage(
     data.conversation,
     data.members,
@@ -50,7 +52,7 @@ export function ConversationItem({
       </Avatar>
       <div className="flex min-w-0 flex-1 flex-col">
         <div className="flex items-center justify-between gap-2">
-          <p className="truncate text-sm font-semibold">{title}</p>
+          <p className="truncate text-sm font-semibold">{displayTitle}</p>
           {data.lastMessage?.createdAt ? (
             <span className="text-xs text-muted-foreground">
               {formatMessageTimestamp(new Date(data.lastMessage.createdAt))}
@@ -58,7 +60,9 @@ export function ConversationItem({
           ) : null}
         </div>
         <p className="truncate text-xs text-muted-foreground">
-          {data.lastMessage?.text ?? "No messages yet"}
+          {data.lastMessage?.deleted
+            ? "This message was deleted"
+            : data.lastMessage?.text ?? "No messages yet"}
         </p>
       </div>
       {data.unread > 0 ? (

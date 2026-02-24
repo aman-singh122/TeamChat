@@ -1,5 +1,6 @@
 "use client";
 
+import type { ReactNode } from "react";
 import { Circle } from "lucide-react";
 import { useQuery } from "convex/react";
 import { useAuth } from "@clerk/nextjs";
@@ -15,9 +16,15 @@ type ChatHeaderProps = {
   conversation: Doc<"conversations">;
   members: Doc<"users">[];
   currentUser?: Doc<"users"> | null;
+  summaryButton?: ReactNode;
 };
 
-export function ChatHeader({ conversation, members, currentUser }: ChatHeaderProps) {
+export function ChatHeader({
+  conversation,
+  members,
+  currentUser,
+  summaryButton,
+}: ChatHeaderProps) {
   const { isLoaded, isSignedIn } = useAuth();
   const activeCall = useQuery(
     api.calls.getActiveForConversation,
@@ -57,8 +64,11 @@ export function ChatHeader({ conversation, members, currentUser }: ChatHeaderPro
           <AvatarImage src={image} alt={title} />
           <AvatarFallback>{fallback}</AvatarFallback>
         </Avatar>
-        <div>
-          <p className="text-base font-semibold">{title}</p>
+        <div className="space-y-1">
+          <div className="flex items-center gap-2.5">
+            <p className="text-base font-semibold">{title}</p>
+            {summaryButton ? <div className="ml-1">{summaryButton}</div> : null}
+          </div>
           <p className="flex items-center gap-2 text-xs text-muted-foreground">
             {!conversation.isGroup ? (
               <Circle

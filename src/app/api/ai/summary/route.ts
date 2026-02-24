@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
-import OpenAI from "openai";
 
-import { getOpenAIEnv } from "@/lib/env";
+import { getGeminiEnv } from "@/lib/env";
 import { buildSummaryPrompt } from "@/lib/ai/summary";
 
 export const runtime = "nodejs";
@@ -14,6 +13,26 @@ type SummaryRequest = {
   }>;
 };
 
+function fallbackSummaryFromMessages(messages: SummaryRequest["messages"]) {
+  const recent = messages
+    .slice(-5)
+    .map((message) => `- ${message.sender}: ${message.text}`);
+
+  return recent.join("\n");
+}
+
+function sanitizeSummary(raw: string) {
+  const cleaned = raw
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .filter((line) => !/^here'?s\s+a\s+summary/i.test(line))
+    .filter((line) => !/^summary\s*:/i.test(line))
+    .map((line) => (line.startsWith("- ") ? line : `- ${line.replace(/^[•*-]\s*/, "")}`));
+
+  return cleaned.join("\n");
+}
+
 export async function POST(request: Request) {
   try {
     const body = (await request.json()) as SummaryRequest;
@@ -24,8 +43,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const { openaiApiKey } = getOpenAIEnv();
-    const client = new OpenAI({ apiKey: openaiApiKey });
+    const { geminiApiKey, geminiModel } = getGeminiEnv();
 
     const formatted = body.messages
       .slice(0, 200)
@@ -35,18 +53,78 @@ export async function POST(request: Request) {
       )
       .join("\n");
 
-    const completion = await client.chat.completions.create({
-      model: "gpt-4o-mini",
-      temperature: 0.2,
-      max_tokens: 300,
-      messages: buildSummaryPrompt(formatted),
-    });
+    const candidateModels = Array.from(
+      new Set([geminiModel, "gemini-2.5-flash", "gemini-2.0-flash", "gemini-1.5-flash"])
+    );
 
-    const summary = completion.choices[0]?.message?.content?.trim() ?? "";
-    return NextResponse.json({ summary });
+    let summary = "";
+    let lastError = "Gemini request failed";
+    for (const model of candidateModels) {
+      const response = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${geminiApiKey}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            contents: [
+              {
+                role: "user",
+                parts: [{ text: buildSummaryPrompt(formatted) }],
+              },
+            ],
+            generationConfig: {
+              temperature: 0.2,
+              maxOutputTokens: 300,
+            },
+          }),
+        }
+      );
+
+      const payload = (await response.json()) as {
+        candidates?: Array<{
+          content?: {
+            parts?: Array<{ text?: string }>;
+          };
+        }>;
+        error?: { message?: string };
+      };
+
+      if (!response.ok) {
+        lastError = payload.error?.message ?? "Gemini request failed";
+        continue;
+      }
+
+      summary =
+        payload.candidates?.[0]?.content?.parts
+          ?.map((part) => part.text ?? "")
+          .join("\n")
+          .trim() ?? "";
+
+      if (summary) {
+        break;
+      }
+      lastError = "Gemini returned an empty summary";
+    }
+
+    if (!summary) {
+      throw new Error(lastError);
+    }
+
+    const normalized = sanitizeSummary(summary);
+    const finalSummary =
+      normalized && normalized.length > 10
+        ? normalized
+        : fallbackSummaryFromMessages(body.messages);
+
+    return NextResponse.json({ summary: finalSummary });
   } catch (error) {
+    const message =
+      error instanceof Error
+        ? error.message
+        : "Failed to generate summary.";
+
     return NextResponse.json(
-      { error: "Failed to generate summary." },
+      { error: message },
       { status: 500 }
     );
   }

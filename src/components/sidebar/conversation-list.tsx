@@ -18,7 +18,7 @@ export function ConversationList({
   }
 
   return (
-    <ScrollArea className="flex-1">
+    <ScrollArea className="flex-1 overscroll-contain">
       <div className="space-y-2">
         {conversations.map((item) => (
           <ConversationItem
