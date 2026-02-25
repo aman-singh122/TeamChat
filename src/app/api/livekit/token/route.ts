@@ -38,7 +38,7 @@ export async function POST(request: Request) {
     name,
   });
 
-  console.log("Generated JWT:", token); // optional debug
+  console.log("Generated JWT:", token); 
 
   return NextResponse.json({ token });
 }

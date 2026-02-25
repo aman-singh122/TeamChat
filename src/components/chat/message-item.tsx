@@ -19,6 +19,13 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
+function getErrorMessage(error: unknown, fallback: string) {
+  if (error instanceof Error && error.message) {
+    return error.message;
+  }
+  return fallback;
+}
+
 type ForwardTarget = {
   id: Id<"conversations">;
   title: string;
@@ -74,8 +81,8 @@ export function MessageItem({
     try {
       await deleteMessage({ messageId });
       toast.success("Message deleted");
-    } catch {
-      toast.error("Unable to delete message.");
+    } catch (error) {
+      toast.error(getErrorMessage(error, "Unable to delete message."));
     }
   };
 
@@ -94,8 +101,8 @@ export function MessageItem({
       await onEditMessage(messageId, nextText);
       setEditing(false);
       toast.success("Message updated");
-    } catch {
-      toast.error("Unable to edit message.");
+    } catch (error) {
+      toast.error(getErrorMessage(error, "Unable to edit message."));
     }
   };
 
@@ -120,8 +127,8 @@ export function MessageItem({
     try {
       await onForwardMessage(messageId, targetConversationId);
       toast.success("Message forwarded");
-    } catch {
-      toast.error("Unable to forward message.");
+    } catch (error) {
+      toast.error(getErrorMessage(error, "Unable to forward message."));
     }
   };
 
@@ -193,14 +200,17 @@ export function MessageItem({
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align={isOwn ? "end" : "start"}>
-                <DropdownMenuItem disabled={deleted || failed} onClick={() => void handleCopy()}>
+                <DropdownMenuItem
+                  disabled={deleted || failed}
+                  onSelect={() => void handleCopy()}
+                >
                   <Copy className="h-4 w-4" />
                   Copy
                 </DropdownMenuItem>
                 {isOwn ? (
                   <DropdownMenuItem
                     disabled={!canMutate || !onEditMessage}
-                    onClick={() => setEditing(true)}
+                    onSelect={() => setEditing(true)}
                   >
                     <Pencil className="h-4 w-4" />
                     Edit
@@ -215,7 +225,7 @@ export function MessageItem({
                     {forwardTargets.map((target) => (
                       <DropdownMenuItem
                         key={target.id}
-                        onClick={() => void handleForward(target.id)}
+                        onSelect={() => void handleForward(target.id)}
                       >
                         {target.title}
                       </DropdownMenuItem>
@@ -223,7 +233,10 @@ export function MessageItem({
                   </DropdownMenuSubContent>
                 </DropdownMenuSub>
                 {isOwn ? (
-                  <DropdownMenuItem disabled={!canMutate} onClick={() => void handleDelete()}>
+                  <DropdownMenuItem
+                    disabled={!canMutate}
+                    onSelect={() => void handleDelete()}
+                  >
                     <Trash2 className="h-4 w-4" />
                     Delete
                   </DropdownMenuItem>
